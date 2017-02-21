@@ -8,9 +8,11 @@ import tornado.httpserver
 import tornado.ioloop
 import tornado.options
 import tornado.web
+import tornado.escape 
+
 from tornado.options import define, options
 
-import pymongo
+#import pymongo
 
 define("port", default=8002, help="run on the given port", type=int)
 
@@ -25,8 +27,8 @@ class Application(tornado.web.Application):
 			static_path=os.path.join(os.path.dirname(__file__), "static"),
 			debug=True,
 			)
-		conn = pymongo.Connection("localhost", 12345)
-		self.db = conn["demo"]
+		#conn = pymongo.Connection("localhost", 12345)
+		#self.db = conn["demo"]
 		tornado.web.Application.__init__(self, handlers, **settings)
 
 
@@ -43,22 +45,19 @@ class MainHandler(tornado.web.RequestHandler):
 			blog['title'] = title
 			blog['content'] = content
 			blog['date'] = int(time.time())
-			coll = self.application.db.blog
-			coll.insert(blog)
+			#coll = self.application.db.blog
+			#coll.insert(blog)
 			self.redirect('/blog')
 
 
 class BlogHandler(tornado.web.RequestHandler):
 	def get(self):
-		coll = self.application.db.blog
-		blog = coll.find_one()
-		if blog:
-			self.render("blog.html",
-				page_title = blog['title'],
-				blog = blog,
-				)
-		else:
-			self.redirect('/')
+		self.set_header("Content-Type", "application/json; charset=UTF-8")
+		self.write(tornado.escape.json_encode({'success': False, 'msg': u'您的会话已过期，请重新登录！'}))
+	def post(self):
+		self.set_header("Content-Type", "application/json; charset=UTF-8")
+		self.write(tornado.escape.json_encode({'success': False, 'msg': u'您的会话已过期，请重新登录！'}))
+
 
 def main():
 	tornado.options.parse_command_line()
